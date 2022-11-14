@@ -1,0 +1,95 @@
+{% macro wol(portList) -%}
+<div class='container'>
+    <h2>Wake-on-LAN <button id="add-pc" class="button is-success">Add PC</button></h2>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="notification is-danger">
+            {{ messages[0] }}
+        </div>
+    {% endif %}
+    {% endwith %}
+    {%for port in portList%}
+    <div class="pc columns" id="wake-{{port.id}}">
+        <p class="column">{{port.name}}</p>
+        <p class="column">{{port.macaddr}}</p>
+        <button class="del button is-danger">Delete</button>
+        <button class="wake button is-link">Wake</button>
+    </div>
+    {%endfor%}
+    <div id="add-pc-modal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <div class="card">
+                <div class="card-content">
+                    <form class="content" method="POST" action="/wol">
+                        <div class="field">
+                            <div class="control">
+                                <input class="input" type="text" name="name" placeholder="My pc" autofocus="">
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <div class="control">
+                                <input class="input" type="text" name="macaddr" placeholder="00:29:15:80:4E:4A">
+                            </div>
+                        </div>
+                        <button class="button is-block is-info is-fullwidth">Add PC</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <button id="close-add-pc" class="modal-close is-large" aria-label="close"></button>
+    </div>
+</div>
+<script type=text/javascript>
+        $(function() {
+          $('button.wake').on('click', function(e) {
+            e.preventDefault()
+            let portListId = e.currentTarget.parentNode.id
+            let id = portListId.replace('wake-', '')
+            $.post('/wol/wake', { id: id },
+                function(data) {
+                    if(data == '1')
+                        console.log("packet send!")
+                    console.log(data)
+            });
+            return false;
+          });
+          $('button.del').on('click', function(e) {
+            e.preventDefault()
+            let portListId = e.currentTarget.parentNode.id
+            let id = portListId.replace('wake-', '')
+            $.ajax({
+                url: '/wol/'+id,
+                type: 'DELETE',
+                success: (data) => {
+                    console.log(data)
+            }});
+            return false;
+          });
+
+          $('button#add-pc').on('click', (e)=>{
+            $('div#add-pc-modal').addClass('is-active')
+          })
+          $('button#close-add-pc').on('click', (e)=>{
+            $('div#add-pc-modal').removeClass('is-active')
+          })
+        });
+</script>
+<style>
+    .container{
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    h2 {
+        display: flex;
+        align-items: center;
+        align-self: center;
+    }
+
+    .card{
+        border-radius: 0.5rem;
+    }
+</style>
+{%- endmacro %}
